@@ -6,9 +6,12 @@ import usersRouter from "./routers/users/user-router.js";
 import productsRouter from "./routers/products/products-router.js";
 import { Database } from "./database/db.js";
 import { rateLimitMiddleware } from "./middlewares/rateLimit.js";
+import { SocketHandler } from "./sockets/socket.js";
+import http from "http";
 
 
 const app = express();
+const server = http.createServer(app);
 
 const database = new Database();
 database.setup();
@@ -19,8 +22,14 @@ app.use(bodyParser());
 app.use(rateLimitMiddleware);
 
 app.use("/users", usersRouter);
-app.use("/products", productsRouter);
+app.use("/api/products", productsRouter);
 
-app.listen(8000, ()=> {
-console.log("App running on port 8000");
+new SocketHandler(server);
+
+///app.listen(8000, ()=> {
+///console.log("App running on port 8000");
+///});
+
+server.listen(8000, () => {
+    console.log("App running on port 8000");
 });
