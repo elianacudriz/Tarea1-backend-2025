@@ -3,11 +3,22 @@ import Users from "./user-entity.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { configDotenv } from "dotenv";
+import Valkey from "iovalkey";
 configDotenv();
 
+const cache = new Valkey();
 export const GetAllUsers = async (req, res) => {
     try {
-        const users = await Users.findAll();
+        let users = await cache.get("users");
+        users = JSON.parse(users);
+        if (users) {
+            return res.status(200).json({
+                data: users,
+            });
+        }
+
+        users = await Users.findAll();
+        await cache.set("users", JSON.stringify(users), "EX", 30);
 
         return res.status(200).json({
             data: users,

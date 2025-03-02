@@ -2,21 +2,32 @@ import Products from "./products-entity.js";
 import e from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import Valkey from "iovalkey";
 import { configDotenv } from "dotenv";
 configDotenv();
 
+const cache = new Valkey();
 export const GetAllProducts = async (req, res) => {
     try {
-        const users = await Products.findAll();
+        let products = await cache.get("products");
+        products = JSON.parse(products);
+        if (products) {
+            return res.status(200).json({
+                data: products,
+            });
+        }
+
+        products = await Products.findAll();
+        await cache.set("products", JSON.stringify(products), "EX", 30);
 
         return res.status(200).json({
-            data: users,
+            data: products,
         });
     } catch (error) {
         console.log(error);
         return res
             .status(503)
-            .json({ data: "No se pudo encontrar productos" });
+            .json({ data: "No se pudo obtener los productos" });
     }
 };
 
@@ -24,14 +35,13 @@ export const CreateProducts= async (req, res) => {
     try {
         const { name, description, stock, price,active} = req.body;
 
-        await Products.create({ name, description, stock, price,active });
+        const product = await Products.findOne({where:{name:name}})
 
-        const user = await Products.findOne({where:{name:name}})
-
-        if(user){
+        if(product){
             return res.status(400).json({data:"Producto ya existe"});
         }
 
+        await Products.create({ name, description, stock, price,active });
         return res.status(201).json({ data: "Producto creado" });
 
         
