@@ -1,41 +1,82 @@
-import { ProductEntity } from "./products-entity.js";
+import Products from "./products-entity.js";
+import e from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { configDotenv } from "dotenv";
+configDotenv();
 
-const productEntity = new ProductEntity();
+export const GetAllProducts = async (req, res) => {
+    try {
+        const users = await Products.findAll();
 
-export const GetAllProducts = (request, response) =>{
-    const products = productEntity.getAll();
+        return res.status(200).json({
+            data: users,
+        });
+    } catch (error) {
+        console.log(error);
+        return res
+            .status(503)
+            .json({ data: "No se pudo encontrar productos" });
+    }
+};
 
-    return response.json({
-        data:products
-    })
-}
+export const CreateProducts= async (req, res) => {
+    try {
+        const { name, description, stock, price,active} = req.body;
 
-export const CreateProducts = (request, response) =>{
-   const product = request.body
+        await Products.create({ name, description, stock, price,active });
 
-   const newProduct = productEntity.create(product);
-   return response.json({
-            data: newProduct
-   })
-}
+        const user = await Products.findOne({where:{name:name}})
 
-export const UpdateProduct = (request, response) =>{
+        if(user){
+            return res.status(400).json({data:"Producto ya existe"});
+        }
+
+        return res.status(201).json({ data: "Producto creado" });
+
+        
+    } catch (error) {
+        return res.status(503).json({
+            data: "No se pudo crear",
+        });
+    }
+};
+
+export const UpdateProducts = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, stock, price,active } = req.body;
+
+        await Products.update(
+            { name, description, stock, price,active },
+            {
+                where: {
+                    id: id,
+                },
+            }
+        );
+        return res.status(202).json({ data: "Producto Actualizado" });
+    } catch (error) {
+        console.log(error);
+        return res.status(503).json({
+            data: "No se pudo actualizar el producto",
+        });
+    }
+};
+export const DeleteProduct = async (req, res) => {
     
-    const {id} = request.params;
-    const productData = request.body;
+    try {
+        const { id } = req.params;
+        await Products.destroy({
+            where: {
+                id: id,
+            },
+        });
 
-    const newProduct = productEntity.update(+id, productData);
-    return response.json({
-             data: newProduct
-    })
- }
+        res.status(200).json({ data: "Producto Eliminado" });
+    } catch (error) {
+        console.log(error);
+        res.status(503).json({ data: "No se pudo eliminar el producto" });
+    }
+};
 
- export const DeleteProduct = (request, response) =>{
-    
-    const {id} = request.params;
-    productEntity.delete(+id);
-
-    return response.json({
-             message: "Producto eliminado exitosamente"
-    })
- }
