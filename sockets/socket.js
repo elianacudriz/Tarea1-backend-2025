@@ -27,6 +27,14 @@ export class SocketHandler{
                 }
             });
 
+            socket.on("update-product-price", async ({ productId, newPrice }) => {
+                const updatedProduct = await this.updateProductPrice(productId, newPrice); 
+            
+                if (updatedProduct) {
+                    socket.emit("product-price-updated", updatedProduct); 
+                }
+            });
+
             socket.on("disconnect", () => {
                 console.log("Cliente disconnected");
             });
@@ -50,4 +58,22 @@ export class SocketHandler{
         const newProduct = await Products.findOne({where:{id:productId}})
         this.iosocket.emit("stock-updated", newProduct);
     }
+
+    async updateProductPrice(productId, newPrice) {
+        const exist = await Products.findOne({ where: { id: productId } });
+    
+        if (!exist) {
+            return null;
+        }
+        console.log('Actualizando precio ProducId' + productId, 'a ' + newPrice)
+
+        await Products.update({ price: newPrice }, { where: { id: productId } });
+    
+        const updatedProduct = await Products.findOne({ where: { id: productId } });
+
+        this.iosocket.emit("price-updated", updatedProduct);
+    
+        return updatedProduct;
+    }
+    
 }
