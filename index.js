@@ -5,7 +5,7 @@ import morgan from "morgan";
 import usersRouter from "./routers/users/user-router.js";
 import productsRouter from "./routers/products/products-router.js";
 import { Database } from "./database/db.js";
-import { rateLimitMiddleware } from "./middlewares/rateLimit.js";
+//import { rateLimitMiddleware } from "./middlewares/rateLimit.js";
 import { SocketHandler } from "./sockets/socket.js";
 import http from "http";
 
@@ -19,7 +19,7 @@ database.setup();
 app.use(cors());
 app.use(morgan());
 app.use(bodyParser());
-app.use(rateLimitMiddleware);
+//app.use(rateLimitMiddleware);
 
 app.use("/users", usersRouter);
 app.use("/api/products", productsRouter);

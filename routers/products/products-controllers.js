@@ -6,23 +6,15 @@ import Valkey from "iovalkey";
 import { configDotenv } from "dotenv";
 configDotenv();
 
-const cache = new Valkey();
+
 export const GetAllProducts = async (req, res) => {
     try {
-        let products = await cache.get("products");
-        products = JSON.parse(products);
-        if (products) {
+
+        const products = await Products.findAll();
             return res.status(200).json({
                 data: products,
             });
-        }
-
-        products = await Products.findAll();
-        await cache.set("products", JSON.stringify(products), "EX", 30);
-
-        return res.status(200).json({
-            data: products,
-        });
+  
     } catch (error) {
         console.log(error);
         return res
